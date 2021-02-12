@@ -1,0 +1,79 @@
+<h1>HOLA!</h1>
+</br>
+<div>
+    <nav><label for="function">Choose a function:</label>
+    <select name="function" id="function">
+        <option value="" selected> --Choose-- </option>
+        <option value="OVERVIEW">Overview</option>
+        <option value="TIME_SERIES_INTRADAY">Intraday</option>
+    </select></nav>
+    <nav id="intervalDD" hidden="true"><label for="interval">Choose a interval:</label>
+        <select name="interval" id="interval">
+            <option value="" selected> --Choose-- </option>
+            <option value="1min">1 min</option>
+            <option value="5min">5 mins</option>
+            <option value="15min">15 mins</option>
+            <option value="30min">30 mins</option>
+            <option value="60min">60 mins</option>
+        </select></nav>
+    <nav>Symbol<input id="symbol"></input></nav>
+    </br>
+    <nav><button id="go1">Get AlphaVantageAPI</button></nav>
+    </br>
+    <nav>[Optional] Number of Tweets to Run Stream for: <input id="numberOfTweets"></input></nav>
+    <nav><button id="go2">Start TweetStream</button></nav>
+    <nav><button id="go3">End TweetStream</button></nav>
+</div>
+</br>
+<div id="overview"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $( "#function").change(() => {
+        ($( "#function").val() == 'TIME_SERIES_INTRADAY') ? $( "#intervalDD").prop('hidden', false) : $( "#intervalDD").prop('hidden', true);
+    });
+
+    $( "#go1" ).click(() => {
+        $.ajax({
+            url: "/CompOverview",
+            type: "post",
+            data: {"function": $( "#function").val(),"symbol":$( "#symbol").val()},
+            success: function(response) {
+                console.log(response);
+                //$( "#overview").html(`<p>${response.Name}</p><p>${response.Symbol}</p><p>${response.Exchange}</p>`);
+            },
+            error: function(e) {
+                console.error(e);
+            }
+        });
+    });
+
+    $( "#go2" ).click(() => {
+        $.ajax({
+            url: "/TweetStream",
+            type: "post",
+            data: {"numberOfTweets": $( "#numberOfTweets" ).val()},
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(e) {
+                console.error(e);
+            }
+        });
+    });
+
+    $( "#go3" ).click(() => {
+        $.ajax({
+            url: "/CloseTweetStream",
+            type: "post",
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(e) {
+                console.error(e);
+            }
+        });
+    });
+    
+</script>
