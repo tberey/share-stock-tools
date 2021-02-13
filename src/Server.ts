@@ -13,7 +13,7 @@ export class Server extends ServerSetup {
         this.tweetStreamState = false;
         this.tweetsSocket = ioclient.io('http://127.0.0.1:3010/');
         this.avAPISocket = ioclient.io('http://127.0.0.1:3100/');
-        this.tweetStream();
+        this.twittwerAPI();
         this.alphaVantageAPI();
         this.getRequests();
     }
@@ -24,9 +24,9 @@ export class Server extends ServerSetup {
     }
 
 
-    private tweetStream():void {
+    private twittwerAPI():void {
         
-        this.app.post('/TweetStream', (req:Request,res:Response):void => {
+        this.app.post('/TweetStream/Open', (req:Request,res:Response):void => {
             
             if (this.tweetStreamState) {
                 res.status(404).send();
@@ -53,10 +53,10 @@ export class Server extends ServerSetup {
 
                 let x: number = 0;             
                 this.tweetsSocket.on('Tweet', (data:any):void => {
-                    
-                    console.log(data['data']['text']);
-                    console.log('\n<--------------------------------------------->\n');
+
                     x++;
+                    console.log(x, data['data']['text']);
+                    console.log('\n<--------------------------------------------->\n');
 
                     if (req.body['numberOfTweets'].length && x >= parseInt(req.body['numberOfTweets'])) {
                         console.warn('Closing Tweet Stream (Set Tweet Number Reached)');
@@ -69,7 +69,7 @@ export class Server extends ServerSetup {
             if (res.headersSent == false) res.status(200).send();
         });
 
-        this.app.post('/CloseTweetStream', (req:Request,res:Response):void => {
+        this.app.post('/TweetStream/Close', (req:Request,res:Response):void => {
             
             if (!this.tweetStreamState) {
                 res.status(404).send();
@@ -81,6 +81,31 @@ export class Server extends ServerSetup {
             this.tweetsSocket.off('Tweet');
             this.tweetStreamState = false;
             res.status(200).send();
+        });
+
+        this.app.post('/TweetStream/Rules', (req:Request, res:Response):void => {
+            
+            if (this.tweetStreamState) {
+                res.status(404).send();
+                return;
+            };
+
+            this.tweetsSocket.connect();
+
+            this.tweetsSocket.once('connect', () => {
+
+                console.info('\nTwitter Socket Connected');
+                console.warn('Requesting Rules Update:\n');
+
+                this.tweetsSocket.once('disconnect',() => console.info('Twitter Socket Disconnected\n'));
+                this.avAPISocket.once('CompanyData', (data:object) => {
+                    console.log(data);
+                    console.warn('\nRules Request Complete');
+                });
+                this.tweetsSocket.emit('rulePayload', req.body);
+                res.status(200).send();
+            });
+
         });
     }
 
@@ -96,13 +121,12 @@ export class Server extends ServerSetup {
                 console.info('\nAV API Socket Connected');
                 console.warn('Requesting Overview Data:\n');
 
-                this.avAPISocket.emit('params', req.body);
                 this.avAPISocket.once('disconnect', () => console.info('AV API Socket Disconnected\n'));
                 this.avAPISocket.once('CompanyData', (data:object) => {
                     console.log(data);
                     console.warn('\nOverview Request Complete');
                 });
-                
+                this.avAPISocket.emit('params', req.body);
                 res.status(200).send();
             });
         });
