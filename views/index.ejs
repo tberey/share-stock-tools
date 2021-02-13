@@ -1,28 +1,39 @@
 <h1>HOLA!</h1>
 </br>
 <div>
-    <nav><label for="function">Choose a function:</label>
+    <nav><label for="function">Choose a function: *</label>
     <select name="function" id="function">
         <option value="" selected> --Choose-- </option>
         <option value="OVERVIEW">Overview</option>
         <option value="TIME_SERIES_INTRADAY">Intraday</option>
     </select></nav>
-    <nav id="intervalDD" hidden="true"><label for="interval">Choose a interval:</label>
+    <nav id="intervalDD" hidden="true"><label for="interval">Choose a interval: *</label>
         <select name="interval" id="interval">
-            <option value="" selected> --Choose-- </option>
+            <option value="" selected> -- Choose -- </option>
             <option value="1min">1 min</option>
             <option value="5min">5 mins</option>
             <option value="15min">15 mins</option>
             <option value="30min">30 mins</option>
             <option value="60min">60 mins</option>
         </select></nav>
-    <nav>Symbol<input id="symbol"></input></nav>
+    <nav>Symbol:<input id="symbol"></input>*</nav>
     </br>
     <nav><button id="go1">Get AlphaVantageAPI</button></nav>
     </br>
-    <nav>[Optional] Number of Tweets to Run Stream for: <input id="numberOfTweets"></input></nav>
+    <nav>[Optional] Number of Tweets to Run Stream for:<input id="numberOfTweets"></input></nav>
     <nav><button id="go2">Start TweetStream</button></nav>
     <nav><button id="go3">End TweetStream</button></nav>
+    </br>
+    <nav>Rule:<input id="rule"></input>*</nav>
+    <nav>Description of Rule:<input id="ruleDescription"></input>*</nav>
+    <nav id="addRemoveDD"><label for="addOrRemove">Add or Remove Rule: *</label>
+        <select name="addOrRemove" id="addOrRemove">
+            <option value="" selected> -- Choose -- </option>
+            <option value="addRule">Add Rule</option>
+            <option value="removeRule">Remove Rule</option>
+        </select></nav>
+    <nav><button id="go4">Request to Add or Remove Rules</button></nav>
+
 </div>
 </br>
 <div id="overview"></div>
@@ -51,7 +62,7 @@
 
     $( "#go2" ).click(() => {
         $.ajax({
-            url: "/TweetStream",
+            url: "/TweetStream/Open",
             type: "post",
             data: {"numberOfTweets": $( "#numberOfTweets" ).val()},
             success: function(response) {
@@ -65,8 +76,25 @@
 
     $( "#go3" ).click(() => {
         $.ajax({
-            url: "/CloseTweetStream",
+            url: "/TweetStream/Close",
             type: "post",
+            success: function(response) {
+                console.log(response);
+            },
+            error: function(e) {
+                console.error(e);
+            }
+        });
+    });
+
+    $( "#go4" ).click(() => {
+        $.ajax({
+            url: "/TweetStream/Rules",
+            type: "post",
+            data: {
+                "rule": $( "#rule" ).val(),
+                "ruleDescription": $( "#ruleDescription" ).val(),
+                "addOrRemove": $("#addOrRemove").val()},
             success: function(response) {
                 console.log(response);
             },
