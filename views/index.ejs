@@ -9,7 +9,6 @@
     </select></nav>
     <nav id="intervalDD" hidden="true"><label for="interval">Choose a interval: *</label>
         <select name="interval" id="interval">
-            <option value="" selected> -- Choose -- </option>
             <option value="1min">1 min</option>
             <option value="5min">5 mins</option>
             <option value="15min">15 mins</option>
@@ -24,15 +23,16 @@
     <nav><button id="go2">Start TweetStream</button></nav>
     <nav><button id="go3">End TweetStream</button></nav>
     </br>
-    <nav>Rule:<input id="rule"></input>*</nav>
-    <nav>Description of Rule:<input id="ruleDescription"></input>*</nav>
-    <nav id="addRemoveDD"><label for="addOrRemove">Add or Remove Rule: *</label>
-        <select name="addOrRemove" id="addOrRemove">
-            <option value="" selected> -- Choose -- </option>
-            <option value="addRule">Add Rule</option>
-            <option value="removeRule">Remove Rule</option>
+    <nav>Rule:<input id="rule"></input>(Add Rule)</nav>
+    <nav>Description of Rule:<input id="ruleDescription"></input>(Add Rule)</nav>
+    <nav>ID of Rule:<input id="ruleId"></input>(Delete Rule)</nav>
+    <nav id="addDeleteDD"><label for="addOrDeleteOrGet">Add, Delete, or View Rules: *</label>
+        <select name="addOrDeleteOrGet" id="addOrDeleteOrGet">
+            <option value="add">Add Rule</option>
+            <option value="delete">Delete Rule</option>
+            <option value="get">See Rules</option>
         </select></nav>
-    <nav><button id="go4">Request to Add or Remove Rules</button></nav>
+    <nav><button id="go4">Request to Add, Delete or Get Rules</button></nav>
 
 </div>
 </br>
@@ -93,8 +93,10 @@
             type: "post",
             data: {
                 "rule": $( "#rule" ).val(),
+                "id": $('#ruleId').val(),
                 "ruleDescription": $( "#ruleDescription" ).val(),
-                "addOrRemove": $("#addOrRemove").val()},
+                "addOrDeleteOrGet": $("#addOrDeleteOrGet").val()
+            },
             success: function(response) {
                 console.log(response);
             },

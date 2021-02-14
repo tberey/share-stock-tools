@@ -4,13 +4,11 @@ import ioclient from "socket.io-client";
 
 export class Server extends ServerSetup {
 
-    tweetStreamState: boolean;
     tweetsSocket: ioclient.Socket;
     avAPISocket: ioclient.Socket;
 
     public constructor(port:string='3000', hostname:string='127.0.0.1') {
         super(port,hostname);
-        this.tweetStreamState = false;
         this.tweetsSocket = ioclient.io('http://127.0.0.1:3010/');
         this.avAPISocket = ioclient.io('http://127.0.0.1:3100/');
         this.twittwerAPI();
@@ -26,33 +24,61 @@ export class Server extends ServerSetup {
 
     private twittwerAPI():void {
         
+        var tweetStreamState = false;
+
+        this.app.post('/TweetStream/Rules', (req:Request, res:Response):void => {
+            
+            if (tweetStreamState) {
+                res.status(404).send();
+                return;
+            };
+
+            this.tweetsSocket.connect();
+            this.tweetsSocket.emit('requestType', 'tweetStreamRules');
+
+            this.tweetsSocket.once('rules', () => {
+
+                console.info('\nTwitter Socket Connected');
+                console.warn('Requesting Rules Update:\n');
+
+                this.tweetsSocket.once('disconnect',() => console.info('Twitter Socket Disconnected\n'));
+                this.tweetsSocket.once('ruleData', (data:object) => {
+                    console.log(data);
+                    console.warn('\nRules Request Complete');
+                });
+                this.tweetsSocket.emit('rulePayload', req.body);
+                res.status(200).send();
+            });
+        });
+        
         this.app.post('/TweetStream/Open', (req:Request,res:Response):void => {
             
-            if (this.tweetStreamState) {
+            if (tweetStreamState) {
                 res.status(404).send();
                 return;
             }
 
             this.tweetsSocket.connect();
+            this.tweetsSocket.emit('requestType', 'tweetStream');
 
-            this.tweetsSocket.once('connect', () => {
+            this.tweetsSocket.once('openTweetStream', () => {
                 
                 console.info('\nTwitter Socket Connected');
                 console.warn('Opening Tweet Stream:\n');
-                this.tweetStreamState = true;
+                tweetStreamState = true;
             
                 this.tweetsSocket.once('disconnect',() => console.info('Twitter Socket Disconnected\n'));
 
                 this.tweetsSocket.once('apiError', (error:object) => {
                     console.warn('Closing Tweet Stream (Error)');
                     this.tweetsSocket.off('Tweet');
-                    this.tweetStreamState = false;
+                    tweetStreamState = false;
                     res.status(500).json({'Err':error});
                     console.error(error);
                 });
 
                 let x: number = 0;             
-                this.tweetsSocket.on('Tweet', (data:any):void => {
+                this.tweetsSocket.on('Tweet', (data:any) => {
 
                     x++;
                     console.log(x, data['data']['text']);
@@ -62,7 +88,7 @@ export class Server extends ServerSetup {
                         console.warn('Closing Tweet Stream (Set Tweet Number Reached)');
                         this.tweetsSocket.emit('closeTweetStream');
                         this.tweetsSocket.off('Tweet');
-                        this.tweetStreamState = false;
+                        tweetStreamState = false;
                     }
                 });
             });
@@ -71,7 +97,7 @@ export class Server extends ServerSetup {
 
         this.app.post('/TweetStream/Close', (req:Request,res:Response):void => {
             
-            if (!this.tweetStreamState) {
+            if (!tweetStreamState) {
                 res.status(404).send();
                 return;
             };
@@ -79,33 +105,8 @@ export class Server extends ServerSetup {
             console.warn('Closing Tweet Stream (User Requested)');
             this.tweetsSocket.emit('closeTweetStream');
             this.tweetsSocket.off('Tweet');
-            this.tweetStreamState = false;
+            tweetStreamState = false;
             res.status(200).send();
-        });
-
-        this.app.post('/TweetStream/Rules', (req:Request, res:Response):void => {
-            
-            if (this.tweetStreamState) {
-                res.status(404).send();
-                return;
-            };
-
-            this.tweetsSocket.connect();
-
-            this.tweetsSocket.once('connect', () => {
-
-                console.info('\nTwitter Socket Connected');
-                console.warn('Requesting Rules Update:\n');
-
-                this.tweetsSocket.once('disconnect',() => console.info('Twitter Socket Disconnected\n'));
-                this.avAPISocket.once('CompanyData', (data:object) => {
-                    console.log(data);
-                    console.warn('\nRules Request Complete');
-                });
-                this.tweetsSocket.emit('rulePayload', req.body);
-                res.status(200).send();
-            });
-
         });
     }
 
