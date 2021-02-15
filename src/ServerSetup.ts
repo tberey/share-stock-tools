@@ -27,6 +27,10 @@ export class ServerSetup {
 
     private startServer():void {
         this.server.listen(parseInt(this.port), this.hostname, ():void =>
-            console.log(`\nClient Server started on http://${this.hostname}:${this.port}\n`));
+            console.log(`\nClient API - HTTP Server started on http://${this.hostname}:${this.port}\n`));
+    }
+
+    private serverClose():void {
+        this.server.close((e?:Error) => (e) ? console.error('ER0', e) : console.log('\nTwitterAPI - Server Shutdown Successfully\n'));
     }
 }
